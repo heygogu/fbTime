@@ -1,0 +1,29 @@
+{
+  "name": "fbtimeline",
+  "version": "1.0.0",
+  "description": "A facebook timeline with CRUD operations",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "npx parcel index.html"
+  },
+  "keywords": [
+    "facebook",
+    "timeline",
+    "CRUD"
+  ],
+  "author": "Rohit Kumar",
+  "license": "ISC",
+  "dependencies": {
+    "antd": "^5.19.1",
+    "parcel": "^2.12.0",
+    "react": "^18.3.1",
+    "react-bottom-scroll-listener": "^5.1.0",
+    "react-dom": "^18.3.1",
+    "react-hot-toast": "^2.4.1",
+    "react-input-emoji": "^5.9.0",
+    "superagent": "^9.0.2"
+  },
+  "devDependencies": {
+    "process": "^0.11.10"
+  }
+}
