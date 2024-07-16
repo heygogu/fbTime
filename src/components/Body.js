@@ -2,28 +2,63 @@ import { useEffect, useState } from "react";
 import InputEmoji from "react-input-emoji";
 import ProfileImage from "./ProfileImage";
 import superagent from "superagent";
-import toast, { Toaster } from 'react-hot-toast';
+import toast, { Toaster } from "react-hot-toast";
 import Shimmer from "./Shimmer";
 import FILTER_IMG from "../assets/icons/filters.png";
 import Card from "./Card";
 
-
-//import { BottomScrollListener } from "react-bottom-scroll-listener";
+// import Loader from "./Loader";
+import InfiniteScroll from "react-infinite-scroll-component";
 
 const Body = () => {
   const [imgCaption, setImgCaption] = useState("");
 
   const [postData, setPostData] = useState([]);
   const [imageFile, setImageFile] = useState([]);
+  const [hasMore, setHasMore] = useState(true);
+  const [index, setIndex] = useState(2);
+  const [isFiltered, setIsFiltered] = useState(false);
+  const [filteredData, setFilteredData] = useState([]);
 
   const [filterDate, setFilterDate] = useState(
     new Date().toISOString().split("T")[0]
   );
 
+  const fetchMoreData = () => {
+    superagent
+      .get(`http://139.59.47.49:4004/api/posts?limit=7&start=${index}`)
+      .then((res) => {
+        const newPosts = res.body.sort(
+          (a, b) => new Date(b.created_at) - new Date(a.created_at)
+        );
+
+        if (isFiltered) {
+          const newFilteredPosts = newPosts.filter((post) => {
+            const postDate = new Date(post.created_at)
+              .toISOString()
+              .split("T")[0];
+            return postDate === filterDate;
+          });
+          setFilteredData((prevItems) => [...prevItems, ...newFilteredPosts]);
+          newFilteredPosts.length > 0 ? setHasMore(true) : setHasMore(false);
+        } else {
+          setPostData((prevItems) => [...prevItems, ...newPosts]);
+          newPosts.length > 0 ? setHasMore(true) : setHasMore(false);
+        }
+      })
+      .catch((err) => console.log(err));
+
+    setIndex((prevIndex) => prevIndex + 1);
+  };
+
   async function getData() {
     try {
+      setIndex(2); 
+      setHasMore(true); 
+      setIsFiltered(false); 
+
       let result = await superagent.get(
-        `http://139.59.47.49:4004/api/posts?limit=15&start=1`
+        `http://139.59.47.49:4004/api/posts?limit=8&start=1`
       );
 
       const sortedPosts = result.body.sort(
@@ -38,18 +73,26 @@ const Body = () => {
 
   async function getFilteredData(filterDate) {
     try {
+      setIndex(2);
+      setHasMore(true);
+      setIsFiltered(true); 
+
       const result = await superagent.get(
-        `http://139.59.47.49:4004/api/posts?limit=15&start=1`
+        `http://139.59.47.49:4004/api/posts?limit=10&start=1`
       );
+
       const filteredPosts = result.body.filter((post) => {
         const postDate = new Date(post.created_at).toISOString().split("T")[0];
         return postDate === filterDate;
       });
+
+      setFilteredData(filteredPosts);
       setPostData(filteredPosts);
     } catch (error) {
       console.log("Error While Filtering :", error);
     }
   }
+
   useEffect(() => {
     getData();
   }, []);
@@ -66,13 +109,11 @@ const Body = () => {
       return response.body.filename;
     } catch (error) {
       console.error("Error uploading image:", error);
-      throw error; // Throw the error to be handled by the caller
     }
   };
 
   const createPost = async (event) => {
     try {
-      // Await the result of uploadImg
       event.preventDefault();
       let filename = await uploadImg();
 
@@ -85,24 +126,26 @@ const Body = () => {
         .post("http://139.59.47.49:4004/api/post")
         .send(payload);
 
-      // You can handle the response from the post creation here
+      setPostData((prevItems) => [apiRes.body, ...prevItems]);
       console.log("Post created successfully:", apiRes.body);
       getData();
       setImageFile([]);
       setImgCaption("");
-      
-      document.getElementById("imageInput").value = "";
-      toast.success("Post Created Successfully")
-      
+
+      toast.success("Post Created Successfully");
     } catch (error) {
       console.error("Error creating post:", error);
-     toast.error("Error While Creating Post")
+      toast.error("Error While Creating Post");
     }
   };
 
   return (
-    <>
-      
+    <InfiniteScroll
+      dataLength={postData.length}
+      next={fetchMoreData}
+      hasMore={hasMore}
+      // loader={<Loader />}
+    >
       <div className="container post-container">
         <div className="row">
           <div className="col post">
@@ -125,7 +168,6 @@ const Body = () => {
               className="all-posts btn btn-primary"
               style={{ borderRadius: "20px" }}
               onClick={() => getData()}>
-              {" "}
               All Posts
             </button>
           </div>
@@ -148,19 +190,17 @@ const Body = () => {
           </div>
         </div>
       </div>
-      {/* <BottomScrollListener onBottom={() => setNextPage((page) => page + 1)} />; */}
 
       {!postData?.length ? (
         <Shimmer />
       ) : (
-        postData?.map((item) => (
+        (isFiltered ? filteredData : postData)?.map((item) => (
           <Card
             key={item.id}
             imgURL={item.background}
             caption={item.post}
             getData={getData}
             id={item.id}
-            
           />
         ))
       )}
@@ -261,12 +301,10 @@ const Body = () => {
                   Close
                 </button>
                 <button
-                   data-bs-dismiss="modal"
+                  data-bs-dismiss="modal"
                   type="submit"
-                  className="btn btn-primary"
-                  >
+                  className="btn btn-primary">
                   Post
-                  
                 </button>
               </div>
             </form>
@@ -324,8 +362,8 @@ const Body = () => {
           </div>
         </div>
       </div>
-      <Toaster/>
-    </>
+      <Toaster />
+    </InfiniteScroll>
   );
 };
 
