@@ -3,14 +3,15 @@ import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { IMG_API_URL } from "../utils/constants.js";
 import superagent from "superagent";
-import InputEmoji from "react-input-emoji";
+import DeleteModal from "../modals/DeleteModal.js";
+
+import UpdateModal from "../modals/UpdateModal.js";
 const Card = ({ imgURL, caption, id, getData }) => {
   const [imgCaption, setImgCaption] = useState("");
 
   const [imageFile, setImageFile] = useState([]);
   const [img, setImg] = useState(imgURL);
   const [changes, setChanges] = useState(1);
-
 
   const uploadImg = async () => {
     try {
@@ -42,7 +43,7 @@ const Card = ({ imgURL, caption, id, getData }) => {
         let filename = await uploadImg();
         payload.background = filename;
       }
-      
+
       const apiRes = await superagent
         .put("http://139.59.47.49:4004/api/post")
         .send(payload);
@@ -87,9 +88,8 @@ const Card = ({ imgURL, caption, id, getData }) => {
     } catch (error) {}
   }
 
-  useEffect(() => {
-    fetchValue();
-  }, []);
+  
+
   return (
     <>
       <div className="card">
@@ -168,164 +168,24 @@ const Card = ({ imgURL, caption, id, getData }) => {
             alt="post-img"></img>
         </div>
       </div>
-      {
-        // Sure to Delete Modal
-      }
 
-      <div
-        className="modal fade"
-        id={`exampleModal${id}`}
-        tabIndex="-1"
-        aria-labelledby="exampleModalLabel"
-        aria-hidden="true">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-body">
-              <p>
-                Posts deleted once can't be retrieved later. Click 'Delete' to
-                proceed.
-              </p>
-            </div>
-            <div className="modal-footer">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                data-bs-dismiss="modal"
-                style={{ backgroundColor: "lightblue", border: "none" }}>
-                Close
-              </button>
-              <button
-                type="button"
-                style={{ backgroundColor: "red", border: "none" }}
-                className="btn btn-primary"
-                data-bs-dismiss="modal"
-                onClick={() => deleteData()}>
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Delete Modal */}
 
-      {/* edit modal */}
+      <DeleteModal id={id} deleteData={deleteData} />
 
-      <div
-        className="modal fade "
-        id={`staticBackdrop+${id}`}
-        data-bs-backdrop="static"
-        data-bs-keyboard="false"
-        tabIndex="-1"
-        aria-labelledby="staticBackdropLabel"
-        aria-hidden="true">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h1 className="modal-title fs-5" id="staticBackdropLabel">
-                Edit Post
-              </h1>
-              <button
-                type="button"
-                className="btn-close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-                onClick={() => {
-                  setImgCaption(imgCaption);
-                  setImageFile([]);
-                }}></button>
-            </div>
-            <form onSubmit={updatePost}>
-              <div className="modal-body">
-                <div className="container modalHeader">
-                  <div className="row header-row">
-                    <div className="col-6">
-                      <div className="modalHeading">
-                        <ProfileImage height={40} width={40} />
-                        <h6
-                          style={{
-                            margin: "0 10px",
-                            position: "relative",
-                            top: "10px",
-                          }}>
-                          Rohit Kumar
-                        </h6>
-                      </div>
-                    </div>
-
-                    <div className="col-6">
-                      <div style={{ width: "100%", display: "flex" }}>
-                        <input
-                          type="file"
-                          id="imageInput"
-                          name="image"
-                          accept="image/*"
-                          onChange={(e) => {
-                            setImageFile(e.target.files);
-                            setImg("");
-                            setChanges(0);
-                          }}></input>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="caption">
-                    
-                    <InputEmoji
-                      className="caption-input"
-                      cleanOnEnter
-                      keepOpened
-                      name="caption"
-                      value={imgCaption}
-                      placeholder="Here goes caption.."
-                      onChange={(value) => setImgCaption(value)}
-                    />
-                  </div>
-                  <div className="image-display">
-                    <img
-                      id="preview"
-                      // src={`${IMG_API_URL}${imageFile[0]}`}
-                      src={
-                        img !== ""
-                          ? `${IMG_API_URL}${img}`
-                          : imageFile.length > 0
-                          ? URL.createObjectURL(imageFile[0])
-                          : ""
-                      }
-                      style={{
-                        objectFit: "fill",
-
-                        width: "300px",
-                        border: "none",
-                        background: "none",
-                        display: "block",
-                      }}></img>
-                  </div>
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  data-bs-dismiss="modal"
-                  onClick={() => {
-                    setImgCaption(imgCaption);
-                    setImageFile([]);
-                  }}>
-                  Close
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  data-bs-dismiss="modal"
-                  onClick={() => {
-                    // setImgCaption(caption);
-                    // setImageFile();
-                  }}>
-                  Update
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
+      {/* Edit Modal */}
+      <UpdateModal
+        id={id}
+        imgCaption={imgCaption}
+        setImgCaption={setImgCaption}
+        imageFile={imageFile}
+        setImageFile={setImageFile}
+        img={img}
+        setImg={setImg}
+        setChanges={setChanges}
+        updatePost={updatePost}
+        fetchValue={fetchValue}
+      />
       <Toaster />
     </>
   );

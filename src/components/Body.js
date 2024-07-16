@@ -1,28 +1,30 @@
 import { useEffect, useState } from "react";
-import InputEmoji from "react-input-emoji";
-import ProfileImage from "./ProfileImage";
 import superagent from "superagent";
 import toast, { Toaster } from "react-hot-toast";
 import Shimmer from "./Shimmer";
-import FILTER_IMG from "../assets/icons/filters.png";
+import Filter from "./Filter.js";
 import Card from "./Card";
-
-// import Loader from "./Loader";
+import Upload from "./Upload.js";
 import InfiniteScroll from "react-infinite-scroll-component";
+import UploadModal from "../modals/UploadModal.js";
+import FilterModal from "../modals/FilterModal.js";
 
 const Body = () => {
+  // All States
   const [imgCaption, setImgCaption] = useState("");
-
   const [postData, setPostData] = useState([]);
   const [imageFile, setImageFile] = useState([]);
   const [hasMore, setHasMore] = useState(true);
   const [index, setIndex] = useState(2);
   const [isFiltered, setIsFiltered] = useState(false);
   const [filteredData, setFilteredData] = useState([]);
-
   const [filterDate, setFilterDate] = useState(
     new Date().toISOString().split("T")[0]
   );
+
+  useEffect(() => {
+    getData();
+  }, []);
 
   const fetchMoreData = () => {
     superagent
@@ -53,12 +55,12 @@ const Body = () => {
 
   async function getData() {
     try {
-      setIndex(2); 
-      setHasMore(true); 
-      setIsFiltered(false); 
+      setIndex(2);
+      setHasMore(true);
+      setIsFiltered(false);
 
       let result = await superagent.get(
-        `http://139.59.47.49:4004/api/posts?limit=8&start=1`
+        `http://139.59.47.49:4004/api/posts?limit=8&start=1&orderby=0`
       );
 
       const sortedPosts = result.body.sort(
@@ -75,7 +77,7 @@ const Body = () => {
     try {
       setIndex(2);
       setHasMore(true);
-      setIsFiltered(true); 
+      setIsFiltered(true);
 
       const result = await superagent.get(
         `http://139.59.47.49:4004/api/posts?limit=10&start=1`
@@ -92,10 +94,6 @@ const Body = () => {
       console.log("Error While Filtering :", error);
     }
   }
-
-  useEffect(() => {
-    getData();
-  }, []);
 
   const uploadImg = async () => {
     try {
@@ -126,9 +124,9 @@ const Body = () => {
         .post("http://139.59.47.49:4004/api/post")
         .send(payload);
 
-      setPostData((prevItems) => [apiRes.body, ...prevItems]);
       console.log("Post created successfully:", apiRes.body);
       getData();
+
       setImageFile([]);
       setImgCaption("");
 
@@ -143,54 +141,14 @@ const Body = () => {
     <InfiniteScroll
       dataLength={postData.length}
       next={fetchMoreData}
-      hasMore={hasMore}
-      // loader={<Loader />}
-    >
-      <div className="container post-container">
-        <div className="row">
-          <div className="col post">
-            <div className="upload-dp">
-              <ProfileImage height={50} width={50} />
-            </div>
-            <input
-              className="upload"
-              placeholder="What's on your mind"
-              data-bs-toggle="modal"
-              data-bs-target="#staticBackdrop"></input>
-          </div>
-        </div>
-      </div>
+      hasMore={hasMore}>
+      {/* Upload Component */}
+      <Upload />
 
-      <div className="container filter-comp">
-        <div className="row ">
-          <div className="col-6">
-            <button
-              className="all-posts btn btn-primary"
-              style={{ borderRadius: "20px" }}
-              onClick={() => getData()}>
-              All Posts
-            </button>
-          </div>
-          <div className="col-5">
-            <div>
-              <h5 style={{ textAlign: "center" }}>
-                Filter through your posts {"-->"}
-              </h5>
-            </div>
-          </div>
-          <div className="col-1 ms-auto">
-            <button
-              style={{ border: "none", backgroundColor: "white" }}
-              data-bs-toggle="modal"
-              data-bs-target="#exampleModal">
-              <img
-                src={FILTER_IMG}
-                style={{ height: "26px", width: "23px" }}></img>
-            </button>
-          </div>
-        </div>
-      </div>
+      {/* Filter Component */}
+      <Filter getData={getData} />
 
+      {/* Cards Getting Rendered */}
       {!postData?.length ? (
         <Shimmer />
       ) : (
@@ -205,163 +163,24 @@ const Body = () => {
         ))
       )}
 
-      {/* post modal */}
-      <div
-        className="modal fade "
-        id="staticBackdrop"
-        data-bs-backdrop="static"
-        data-bs-keyboard="false"
-        tabIndex="-1"
-        aria-labelledby="staticBackdropLabel"
-        aria-hidden="true">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h1 className="modal-title fs-5" id="staticBackdropLabel">
-                Create Post
-              </h1>
-              <button
-                type="button"
-                className="btn-close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-                onClick={() => {
-                  setImgCaption("");
-                  setImageFile([]);
-                }}></button>
-            </div>
-            <form onSubmit={createPost}>
-              <div className="modal-body">
-                <div className="container modalHeader">
-                  <div className="row header-row">
-                    <div className="col-6">
-                      <div className="modalHeading">
-                        <ProfileImage height={40} width={40} />
-                        <h6
-                          style={{
-                            margin: "0 10px",
-                            position: "relative",
-                            top: "10px",
-                          }}>
-                          Rohit Kumar
-                        </h6>
-                      </div>
-                    </div>
+      {/* Upload/Post Modal */}
 
-                    <div className="col-6">
-                      <div style={{ width: "100%", display: "flex" }}>
-                        <input
-                          type="file"
-                          id="imageInput"
-                          name="image"
-                          accept="image/*"
-                          onChange={(e) =>
-                            setImageFile(e.target.files)
-                          }></input>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="caption">
-                    <InputEmoji
-                      className="caption-input"
-                      cleanOnEnter
-                      keepOpened
-                      name="caption"
-                      value={imgCaption}
-                      placeholder="Here goes caption.."
-                      onChange={(value) => setImgCaption(value)}
-                    />
-                  </div>
-                  <div className="image-display">
-                    <img
-                      id="preview"
-                      src={
-                        imageFile.length && URL?.createObjectURL(imageFile[0])
-                      }
-                      style={{
-                        objectFit: "fill",
-
-                        width: "300px",
-                        border: "none",
-                        background: "none",
-                        display: "block",
-                      }}></img>
-                  </div>
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  data-bs-dismiss="modal"
-                  onClick={() => {
-                    setImgCaption("");
-                    setImageFile([]);
-                  }}>
-                  Close
-                </button>
-                <button
-                  data-bs-dismiss="modal"
-                  type="submit"
-                  className="btn btn-primary">
-                  Post
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
+      <UploadModal
+        imgCaption={imgCaption}
+        setImgCaption={setImgCaption}
+        imageFile={imageFile}
+        setImageFile={setImageFile}
+        createPost={createPost}
+      />
 
       {/* Filter Modal */}
 
-      <div
-        className="modal fade filterModal"
-        id="exampleModal"
-        tabIndex="-1"
-        aria-labelledby="exampleModalLabel"
-        aria-hidden="true">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h1 className="modal-title fs-5" id="exampleModalLabel">
-                Select Date
-              </h1>
-              <button
-                type="button"
-                className="btn-close"
-                data-bs-dismiss="modal"
-                aria-label="Close"></button>
-            </div>
-            <div className="modal-body date">
-              <input
-                type="date"
-                id="datepicker"
-                name="datepicker"
-                value={filterDate}
-                onChange={(e) => setFilterDate(e.target.value)}
-                style={{ border: "none" }}></input>
-            </div>
-            <div className="modal-footer">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                data-bs-dismiss="modal"
-                onClick={() =>
-                  setFilterDate(new Date().toISOString().split("T")[0])
-                }>
-                Close
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                data-bs-dismiss="modal"
-                onClick={() => getFilteredData(filterDate)}>
-                Filter
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <FilterModal
+        filterDate={filterDate}
+        setFilterDate={setFilterDate}
+        getFilteredData={getFilteredData}
+      />
+
       <Toaster />
     </InfiniteScroll>
   );
