@@ -17,7 +17,7 @@ const Body = () => {
   const [hasMore, setHasMore] = useState(true);
   const [index, setIndex] = useState(2);
   const [isFiltered, setIsFiltered] = useState(false);
-  const [filteredData, setFilteredData] = useState([]);
+  const [filteredData, setFilteredData] = useState(["hello"]);
   const [filterDate, setFilterDate] = useState(
     new Date().toISOString().split("T")[0]
   );
@@ -67,12 +67,21 @@ const Body = () => {
         (a, b) => new Date(b.created_at) - new Date(a.created_at)
       );
 
+      setFilteredData(["hello"]);
       setPostData(sortedPosts);
     } catch (error) {
       console.log("An Error Occured:", error);
     }
   }
 
+  function getDate(created_at) {
+    try {
+      return new Date(created_at).toISOString().split("T")[0];
+    } catch (error) {
+      console.error("Invalid Date Format:", created_at);
+      return "";
+    }
+  }
   async function getFilteredData(filterDate) {
     try {
       setIndex(2);
@@ -149,6 +158,9 @@ const Body = () => {
       <Filter getData={getData} />
 
       {/* Cards Getting Rendered */}
+      {filteredData.length === 0 && (
+        <h1 style={{ textAlign: "center" }}>No Data Found for {filterDate}</h1>
+      )}
       {!postData?.length ? (
         <Shimmer />
       ) : (
@@ -159,6 +171,7 @@ const Body = () => {
             caption={item.post}
             getData={getData}
             id={item.id}
+            date={getDate(item.created_at)}
           />
         ))
       )}

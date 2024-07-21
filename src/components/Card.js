@@ -1,12 +1,12 @@
 import ProfileImage from "./ProfileImage";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { IMG_API_URL } from "../utils/constants.js";
 import superagent from "superagent";
 import DeleteModal from "../modals/DeleteModal.js";
 
 import UpdateModal from "../modals/UpdateModal.js";
-const Card = ({ imgURL, caption, id, getData }) => {
+const Card = ({ imgURL, caption, id, getData, date }) => {
   const [imgCaption, setImgCaption] = useState("");
 
   const [imageFile, setImageFile] = useState([]);
@@ -89,14 +89,13 @@ const Card = ({ imgURL, caption, id, getData }) => {
   }
 
   
-
   return (
     <>
       <div className="card">
         <div className="card-body">
           <div className="container card-header">
             <div className="row">
-              <div className="col col-11">
+              <div className="col col-4">
                 <div className="cardHeading">
                   <ProfileImage height={40} width={40} />
                   <h6
@@ -109,6 +108,10 @@ const Card = ({ imgURL, caption, id, getData }) => {
                   </h6>
                 </div>
               </div>
+              <div className="col col-7">
+                <h6 style={{ position:"relative" ,top:"30px", right:"2px"}}>{date}</h6>
+              </div>
+
               <div className="col col-1">
                 <div className="dropdown">
                   <button
